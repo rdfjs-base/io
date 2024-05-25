@@ -145,6 +145,24 @@ describe('stream', () => {
       strictEqual(actualMethod, 'GET')
     })
 
+    it('should use the given media type', async () => {
+      const factory = env.clone()
+      const headers = new Headers({ 'content-type': 'text/plain' })
+
+      factory.fetch = async () => {
+        return {
+          headers,
+          ok: true,
+          quadStream: async () => example.stream()
+        }
+      }
+
+      const stream = fromURL('', { factory, mediaType: 'text/turtle' })
+      await chunks(stream)
+
+      strictEqual(headers.get('content-type'), 'text/turtle')
+    })
+
     it('should forward additional arguments', async () => {
       let actualArgs
       const factory = env.clone()

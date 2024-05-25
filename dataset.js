@@ -8,7 +8,7 @@ import createWriteOptions from './lib/createWriteOptions.js'
  * @param mediaType Media type that is used to look up the parser
  * @param text Text to parse
  * @param factory Factory that is used to find the parser and create the dataset
- * @param args Additional arguments for the parser
+ * @param [args] Additional arguments for the parser
  * @returns {Promise<Dataset>} Parsed quads in a dataset
  */
 async function fromText (mediaType, text, { factory, ...args }) {
@@ -32,13 +32,18 @@ async function fromText (mediaType, text, { factory, ...args }) {
  * Parse the content of the given URL and return the quads in a dataset.
  * @param url URL to fetch the content from
  * @param factory Factory that is used to fetch the content and create the dataset
- * @param args Additional arguments for the fetch request
+ * @param [mediaType] Media type that should be used, replacing the content-type header
+ * @param [args] Additional arguments for the fetch request
  * @returns {Promise<Dataset>} Parsed quads in a dataset
  */
-async function fromURL (url, { factory, ...args }) {
+async function fromURL (url, { factory, mediaType, ...args }) {
   const res = await factory.fetch(url, { ...args, method: 'GET' })
 
   await checkResponse(url, {}, res)
+
+  if (mediaType) {
+    res.headers.set('content-type', mediaType)
+  }
 
   return res.dataset()
 }
@@ -48,7 +53,7 @@ async function fromURL (url, { factory, ...args }) {
  * @param mediaType Media type that is used to look up the serializer
  * @param dataset Dataset to serialize
  * @param factory Factory that is used to find the serializer
- * @param args Additional arguments for the serializer
+ * @param [args] Additional arguments for the serializer
  * @returns {Promise<String>} String of the serialized quads
  */
 async function toText (mediaType, dataset, { factory, ...args }) {
@@ -68,7 +73,7 @@ async function toText (mediaType, dataset, { factory, ...args }) {
  * @param url URL to push the content to
  * @param dataset Dataset to serialize
  * @param factory Factory that is used to push the content
- * @param args Additional arguments for the fetch request
+ * @param [args] Additional arguments for the fetch request
  * @returns {Promise<void>}
  */
 async function toURL (url, dataset, { factory, ...args }) {

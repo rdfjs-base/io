@@ -8,9 +8,9 @@ import createWriteOptions from './lib/createWriteOptions.js'
  * Parse the given text with a parser matching the media type and return a stream of quads.
  * @param mediaType Media type that is used to look up the parser
  * @param text Text to parse
- * @param factory Factory that is used to find the parser and create the dataset
- * @param args Additional arguments for the parser
- * @returns {Promise<Dataset>} Parsed quads in a dataset
+ * @param factory Factory that is used to find the parser
+ * @param [args] Additional arguments for the parser
+ * @returns {Readable} Parsed quads in a dataset
  */
 function fromText (mediaType, text, { factory, ...args }) {
   const parser = factory.formats.parsers.get(mediaType)
@@ -29,11 +29,12 @@ function fromText (mediaType, text, { factory, ...args }) {
 /**
  * Parse the content of the given URL and return a stream of quads.
  * @param url URL to fetch the content from
- * @param factory Factory that is used to fetch the content and create the dataset
- * @param args Additional arguments for the fetch request
- * @returns {Promise<Dataset>} Parsed quads in a dataset
+ * @param factory Factory that is used to fetch the content and parse it
+ * @param [mediaType] Media type that should be used, replacing the content-type header
+ * @param [args] Additional arguments for the fetch request
+ * @returns {Readable} Parsed quads in a dataset
  */
-function fromURL (url, { factory, ...args }) {
+function fromURL (url, { factory, mediaType, ...args }) {
   const output = new PassThrough({ objectMode: true })
 
   setTimeout(async () => {
@@ -41,6 +42,10 @@ function fromURL (url, { factory, ...args }) {
       const res = await factory.fetch(url, { ...args, method: 'GET' })
 
       await checkResponse(url, {}, res)
+
+      if (mediaType) {
+        res.headers.set('content-type', mediaType)
+      }
 
       const stream = await res.quadStream()
 
@@ -58,9 +63,9 @@ function fromURL (url, { factory, ...args }) {
 /**
  * Serialize the given stream of quads to a text using a serializer matching the given media type.
  * @param mediaType Media type that is used to look up the serializer
- * @param dataset Dataset to serialize
+ * @param stream Stream to serialize
  * @param factory Factory that is used to find the serializer
- * @param args Additional arguments for the serializer
+ * @param [args] Additional arguments for the serializer
  * @returns {Promise<String>} String of the serialized quads
  */
 async function toText (mediaType, stream, { factory, ...args }) {
@@ -78,9 +83,9 @@ async function toText (mediaType, stream, { factory, ...args }) {
 /**
  * Serialize the given stream of quads and push it to the given URL.
  * @param url URL to push the content to
- * @param dataset Dataset to serialize
- * @param factory Factory that is used to push the content
- * @param args Additional arguments for the fetch request
+ * @param stream Stream to serialize
+ * @param factory Factory that is used to serialize the stream and push the content
+ * @param [args] Additional arguments for the fetch request
  * @returns {Promise<void>}
  */
 async function toURL (url, stream, { factory, ...args }) {
