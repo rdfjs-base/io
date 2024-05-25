@@ -111,6 +111,23 @@ describe('dataset', () => {
       strictEqual(actualMethod, 'GET')
     })
 
+    it('should use the given media type', async () => {
+      const factory = env.clone()
+      const headers = new Headers({ 'content-type': 'text/plain' })
+
+      factory.fetch = async () => {
+        return {
+          dataset: async () => example.dataset,
+          headers,
+          ok: true
+        }
+      }
+
+      await fromURL('', { factory, mediaType: 'text/turtle' })
+
+      strictEqual(headers.get('content-type'), 'text/turtle')
+    })
+
     it('should forward additional arguments', async () => {
       let actualArgs
       const factory = env.clone()
