@@ -1,6 +1,6 @@
 {
   "name": "@rdfjs/io",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "I/O operations for RDF/JS streams and datasets",
   "type": "module",
   "main": "index.js",
@@ -34,9 +34,9 @@
     "@rdfjs/dataset": "^2.0.1",
     "@rdfjs/environment": "^1.0.0",
     "@rdfjs/formats": "^4.0.0",
-    "@rdfjs/to-ntriples": "^2.0.0",
+    "@rdfjs/to-ntriples": "^3.0.1",
     "c8": "^9.1.0",
-    "is-stream": "^3.0.0",
+    "is-stream": "^4.0.1",
     "mocha": "^10.2.0",
     "rdf-test": "^0.1.0",
     "stricter-standard": "^0.3.0"
