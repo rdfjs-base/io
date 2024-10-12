@@ -53,17 +53,18 @@ async function fromURL (url, { factory, mediaType, ...args }) {
  * @param mediaType Media type that is used to look up the serializer
  * @param dataset Dataset to serialize
  * @param factory Factory that is used to find the serializer
+ * @param prefixes Map of prefixes for the serializer
  * @param [args] Additional arguments for the serializer
  * @returns {Promise<String>} String of the serialized quads
  */
-async function toText (mediaType, dataset, { factory, ...args }) {
+async function toText (mediaType, dataset, { factory, prefixes, ...args }) {
   const serializer = factory.formats.serializers.get(mediaType)
 
   if (!serializer) {
     throw new Error(`unknown media type: ${mediaType}`)
   }
 
-  const stream = serializer.import(Readable.from(dataset), args)
+  const stream = serializer.import(Readable.from(dataset), { ...args, prefixes })
 
   return decode(stream, 'utf-8')
 }
@@ -73,12 +74,13 @@ async function toText (mediaType, dataset, { factory, ...args }) {
  * @param url URL to push the content to
  * @param dataset Dataset to serialize
  * @param factory Factory that is used to push the content
+ * @param prefixes Map of prefixes for the serializer
  * @param [args] Additional arguments for the fetch request
  * @returns {Promise<void>}
  */
-async function toURL (url, dataset, { factory, ...args }) {
+async function toURL (url, dataset, { factory, prefixes, ...args }) {
   const options = createWriteOptions(url, Readable.from(dataset))
-  const res = await factory.fetch(url, { ...args, ...options })
+  const res = await factory.fetch(url, { ...args, ...options, prefixes })
 
   await checkResponse(url, options, res)
 }

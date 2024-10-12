@@ -200,9 +200,20 @@ describe('dataset', () => {
     it('should return a text with the serialized triples', async () => {
       const factory = env.clone()
 
-      const text = await toText('text/turtle', example.dataset, { factory })
+      const text = await toText('application/n-triples', example.dataset, { factory })
 
       strictEqual(text, example.nt)
+    })
+
+    it('should return a text with the serialized triples with the given prefixes', async () => {
+      const factory = env.clone()
+      const prefixes = new Map([
+        ['ex', factory.namedNode('http://example.org/')]
+      ])
+
+      const text = await toText('text/turtle', example.dataset, { factory, prefixes })
+
+      strictEqual(text, example.ttl)
     })
 
     it('should forward additional arguments', async () => {
@@ -210,7 +221,7 @@ describe('dataset', () => {
       const factory = env.clone()
 
       factory.formats.serializers.set('text/turtle', {
-        import: (stream, args) => {
+        import: (stream, { prefixes, ...args }) => {
           actualArgs = args
 
           return Readable.from([])
@@ -271,6 +282,29 @@ describe('dataset', () => {
       datasetEqual(actualBody, example.dataset)
     })
 
+    it('should write the dataset via fetch with the given prefixes', async () => {
+      let actualBody
+      let actialPrefixes
+      const factory = env.clone()
+      const prefixes = new Map([
+        ['ex', factory.namedNode('http://example.org/')]
+      ])
+
+      factory.fetch = async (url, { body, prefixes }) => {
+        actualBody = await chunks(body)
+        actialPrefixes = prefixes
+
+        return {
+          ok: true
+        }
+      }
+
+      await toURL('', example.dataset, { factory, prefixes })
+
+      datasetEqual(actualBody, example.dataset)
+      strictEqual(actialPrefixes, prefixes)
+    })
+
     it('should write it to the given URL', async () => {
       let actualUrl
       const factory = env.clone()
@@ -309,7 +343,7 @@ describe('dataset', () => {
       let actualArgs
       const factory = env.clone()
 
-      factory.fetch = async (url, { method, headers, body, ...args }) => {
+      factory.fetch = async (url, { method, headers, body, prefixes, ...args }) => {
         actualArgs = args
 
         return {

@@ -18,6 +18,13 @@ example.dataset = factory.dataset([
 ])
 
 example.nt = toNT(example.dataset)
+example.ttl = `@prefix ex: <http://example.org/>.
+
+ex:subject
+  ex:predicate
+    "object1",
+    "object2".
+`
 
 example.stream = () => Readable.from(example.dataset)
 
