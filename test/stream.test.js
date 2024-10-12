@@ -265,9 +265,20 @@ describe('stream', () => {
     it('should return a text with the serialized triples', async () => {
       const factory = env.clone()
 
-      const text = await toText('text/turtle', example.stream(), { factory })
+      const text = await toText('application/n-triples', example.stream(), { factory })
 
       strictEqual(text, example.nt)
+    })
+
+    it('should return a text with the serialized triples with the given prefixes', async () => {
+      const factory = env.clone()
+      const prefixes = new Map([
+        ['ex', factory.namedNode('http://example.org/')]
+      ])
+
+      const text = await toText('text/turtle', example.stream(), { factory, prefixes })
+
+      strictEqual(text, example.ttl)
     })
 
     it('should forward additional arguments', async () => {
@@ -275,7 +286,7 @@ describe('stream', () => {
       const factory = env.clone()
 
       factory.formats.serializers.set('text/turtle', {
-        import: (stream, args) => {
+        import: (stream, { prefixes, ...args }) => {
           actualArgs = args
 
           return Readable.from([])
@@ -336,6 +347,29 @@ describe('stream', () => {
       datasetEqual(actualBody, example.dataset)
     })
 
+    it('should write the quad stream via fetch with the given prefixes', async () => {
+      let actualBody
+      let actialPrefixes
+      const factory = env.clone()
+      const prefixes = new Map([
+        ['ex', factory.namedNode('http://example.org/')]
+      ])
+
+      factory.fetch = async (url, { body }) => {
+        actualBody = await chunks(body)
+        actialPrefixes = prefixes
+
+        return {
+          ok: true
+        }
+      }
+
+      await toURL('', example.stream(), { factory, prefixes })
+
+      datasetEqual(actualBody, example.dataset)
+      strictEqual(actialPrefixes, prefixes)
+    })
+
     it('should write it to the given URL', async () => {
       let actualUrl
       const factory = env.clone()
@@ -374,7 +408,7 @@ describe('stream', () => {
       let actualArgs
       const factory = env.clone()
 
-      factory.fetch = async (url, { method, headers, body, ...args }) => {
+      factory.fetch = async (url, { method, headers, body, prefixes, ...args }) => {
         actualArgs = args
 
         return {
